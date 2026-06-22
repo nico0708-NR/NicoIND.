@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% block title %}Inventario{% endblock %}
+{% block page_icon %}fas fa-boxes-stacked{% endblock %}
+{% block page_title %}Gestión de Inventario{% endblock %}
+{% block breadcrumb %}NicoIND / Inventario{% endblock %}
+
+{% block content %}
+<!-- Stats -->
+<div class="grid-4 mb-20">
+  <div class="stat-card" style="--sc:#7c3aed">
+    <div class="stat-top">
+      <div><div class="stat-val">{{ products|length }}</div><div class="stat-lbl">Total Productos</div></div>
+      <div class="stat-icon"><i class="fas fa-boxes-stacked"></i></div>
+    </div>
+  </div>
+  <div class="stat-card" style="--sc:#ef4444">
+    <div class="stat-top">
+      <div><div class="stat-val">{{ low_count }}</div><div class="stat-lbl">Stock Bajo / Agotado</div></div>
+      <div class="stat-icon" style="color:#ef4444;background:rgba(239,68,68,.1)"><i class="fas fa-triangle-exclamation"></i></div>
+    </div>
+  </div>
+  <div class="stat-card" style="--sc:#10b981">
+    <div class="stat-top">
+      <div><div class="stat-val">${{ "{:,.0f}".format(total_val) }}</div><div class="stat-lbl">Valor del Inventario</div></div>
+      <div class="stat-icon" style="color:#10b981;background:rgba(16,185,129,.1)"><i class="fas fa-coins"></i></div>
+    </div>
+  </div>
+  <div class="stat-card" style="--sc:#0ea5e9">
+    <div class="stat-top">
+      <div><div class="stat-val">{{ categories|length }}</div><div class="stat-lbl">Categorías</div></div>
+      <div class="stat-icon" style="color:#0ea5e9;background:rgba(14,165,233,.1)"><i class="fas fa-tags"></i></div>
+    </div>
+  </div>
+</div>
+
+<!-- Filter bar -->
+<div class="filter-bar mb-16">
+  <form method="GET" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex:1">
+    <div class="search-input">
+      <i class="fas fa-search"></i>
+      <input type="text" name="q" class="form-control" placeholder="Buscar producto..." value="{{ search }}" style="min-width:200px">
+    </div>
+    <select name="cat" class="form-control" onchange="this.form.submit()" style="min-width:160px">
+      <option value="all" {% if cat=='all' %}selected{% endif %}>Todas las categorías</option>
+      {% for c in categories %}
+      <option value="{{ c }}" {% if cat==c %}selected{% endif %}>{{ c }}</option>
+      {% endfor %}
+    </select>
+    <select name="status" class="form-control" onchange="this.form.submit()" style="min-width:140px">
+      <option value="all" {% if status=='all' %}selected{% endif %}>Todo el stock</option>
+      <option value="low"  {% if status=='low'  %}selected{% endif %}>Stock bajo</option>
+      <option value="out"  {% if status=='out'  %}selected{% endif %}>Agotado</option>
+    </select>
+    <button type="submit" class="btn btn-secondary btn-sm"><i class="fas fa-filter"></i> Filtrar</button>
+    {% if search or cat!='all' or status!='all' %}
+    <a href="{{ url_for('inventory.index') }}" class="btn btn-secondary btn-sm"><i class="fas fa-xmark"></i> Limpiar</a>
+    {% endif %}
+  </form>
+  <a href="{{ url_for('inventory.add') }}" class="btn btn-primary btn-sm">
+    <i class="fas fa-plus"></i> Nuevo Producto
+  </a>
+  <a href="{{ url_for('reports.inventory_excel') }}" class="btn btn-secondary btn-sm">
+    <i class="fas fa-file-excel"></i> Excel
+  </a>
+  <a href="{{ url_for('reports.inventory_pdf') }}" class="btn btn-secondary btn-sm">
+    <i class="fas fa-file-pdf"></i> PDF
+  </a>
+</div>
+
+<!-- Products Table -->
+<div class="card">
+  <div class="table-wrap">
+    {% if products %}
+    <table>
+      <thead>
+        <tr>
+          <th>Código</th><th>Producto</th><th>Categoría</th>
+          <th>Stock</th><th>Mín</th><th>Costo</th><th>Precio</th>
+          <th>Valor</th><th>Margen</th><th>Estado</th><th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in products %}
+        {% set sc = {'ok':'badge-green','low':'badge-amber','out':'badge-red','over':'badge-blue'} %}
+        {% set sl = {'ok':'OK','low':'Bajo','out':'Agotado','over':'Exceso'} %}
+        <tr>
+          <td class="mono c-purple f-12">{{ p.code or '—' }}</td>
+          <td style="font-weight:600;max-width:200px" class="truncate">{{ p.name }}</td>
+          <td><span class="badge badge-gray">{{ p.category }}</span></td>
+          <td style="font-weight:700;color:{% if p.stock_status=='out' %}var(--red-l){% elif p.stock_status=='low' %}var(--amber-l){% else %}var(--text){% endif %}">
+            {{ p.stock }} {{ p.unit }}
+          </td>
+          <td class="c-text2">{{ p.min_stock }}</td>
+          <td>${{ "{:,.2f}".format(p.cost) }}</td>
+          <td class="fw-6">${{ "{:,.2f}".format(p.price) }}</td>
+          <td class="fw-7 c-purple">${{ "{:,.2f}".format(p.stock_value) }}</td>
+          <td class="{% if p.margin>=40 %}c-green{% elif p.margin>=20 %}c-amber{% else %}c-red{% endif %}">
+            {{ p.margin }}%
+          </td>
+          <td><span class="badge {{ sc.get(p.stock_status,'badge-gray') }}">{{ sl.get(p.stock_status,'OK') }}</span></td>
+          <td>
+            <div style="display:flex;gap:4px">
+              <button onclick="showMovementModal({{ p.id }}, '{{ p.name|replace("'","") }}')"
+                      class="btn btn-blue btn-sm" title="Movimiento de stock">
+                <i class="fas fa-arrows-up-down"></i>
+              </button>
+              <a href="{{ url_for('inventory.edit', pid=p.id) }}" class="btn btn-secondary btn-sm" title="Editar">
+                <i class="fas fa-pen"></i>
+              </a>
+              <form method="POST" action="{{ url_for('inventory.delete', pid=p.id) }}" style="display:inline"
+                    onsubmit="return confirm('¿Eliminar {{ p.name|replace("'","") }}?')">
+                <button type="submit" class="btn btn-red btn-sm" title="Eliminar">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <i class="fas fa-boxes-stacked"></i>
+      <p>No se encontraron productos con los filtros seleccionados.</p>
+      <a href="{{ url_for('inventory.add') }}" class="btn btn-primary" style="margin-top:12px">
+        <i class="fas fa-plus"></i> Agregar primer producto
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

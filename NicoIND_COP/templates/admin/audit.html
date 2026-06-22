@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}Auditoría{% endblock %}
+{% block page_icon %}fas fa-scroll{% endblock %}
+{% block page_title %}Registro de Auditoría{% endblock %}
+{% block breadcrumb %}NicoIND / <a href="{{ url_for('admin.index') }}">Admin</a> / Auditoría{% endblock %}
+
+{% block content %}
+<div class="filter-bar mb-16">
+  <form method="GET" style="display:flex;gap:10px;flex-wrap:wrap">
+    <select name="module" class="form-control" onchange="this.form.submit()" style="min-width:150px">
+      <option value="all" {% if mod=='all' %}selected{% endif %}>Todos los módulos</option>
+      {% for m in modules %}
+      <option value="{{ m }}" {% if mod==m %}selected{% endif %}>{{ m }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-secondary btn-sm"><i class="fas fa-filter"></i> Filtrar</button>
+    {% if mod != 'all' %}<a href="{{ url_for('admin.audit_log') }}" class="btn btn-secondary btn-sm"><i class="fas fa-xmark"></i> Limpiar</a>{% endif %}
+  </form>
+</div>
+
+<div class="card">
+  <div class="card-hd">
+    <div class="card-title"><i class="fas fa-scroll"></i> Eventos del Sistema</div>
+    <span class="badge badge-purple">{{ logs.total }} total</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Fecha/Hora</th><th>Acción</th><th>Módulo</th><th>Usuario</th><th>Descripción</th><th>IP</th></tr>
+      </thead>
+      <tbody>
+        {% for log in logs.items %}
+        {% set ac = {'LOGIN':'badge-blue','LOGOUT':'badge-gray','CREATE':'badge-green','UPDATE':'badge-amber','DELETE':'badge-red'} %}
+        <tr>
+          <td class="mono c-text3 f-12" style="white-space:nowrap">{{ log.created_at.strftime('%d/%m/%Y %H:%M:%S') }}</td>
+          <td><span class="badge {{ ac.get(log.action,'badge-gray') }}">{{ log.action }}</span></td>
+          <td><span class="badge badge-gray f-12">{{ log.module }}</span></td>
+          <td class="fw-6" style="font-size:12.5px">
+            {% if log.user %}<i class="fas fa-user c-purple" style="margin-right:5px"></i>{{ log.user.username }}
+            {% else %}<span class="c-text3">sistema</span>{% endif %}
+          </td>
+          <td style="max-width:300px;font-size:12.5px" class="truncate" title="{{ log.description }}">
+            {{ log.description or '—' }}
+          </td>
+          <td class="mono c-text3 f-12">{{ log.ip_address or '—' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="text-center" style="padding:30px;color:var(--text3)">Sin registros de auditoría.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if logs.pages > 1 %}
+  <div class="pagination">
+    {% if logs.has_prev %}
+    <a href="{{ url_for('admin.audit_log', page=logs.prev_num, module=mod) }}" class="page-link">
+      <i class="fas fa-chevron-left"></i>
+    </a>
+    {% endif %}
+    {% for p in logs.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+      {% if p %}
+        <a href="{{ url_for('admin.audit_log', page=p, module=mod) }}"
+           class="page-link {% if p==logs.page %}active{% endif %}">{{ p }}</a>
+      {% else %}
+        <span class="page-link" style="color:var(--text3)">…</span>
+      {% endif %}
+    {% endfor %}
+    {% if logs.has_next %}
+    <a href="{{ url_for('admin.audit_log', page=logs.next_num, module=mod) }}" class="page-link">
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}{% if action=='add' %}Nuevo Empleado{% else %}Editar Empleado{% endif %}{% endblock %}
+{% block page_icon %}fas fa-user{% endblock %}
+{% block page_title %}{% if action=='add' %}Nuevo Empleado{% else %}Editar Empleado{% endif %}{% endblock %}
+{% block breadcrumb %}NicoIND / <a href="{{ url_for('hr.index') }}">RRHH</a> / {{ 'Agregar' if action=='add' else 'Editar' }}{% endblock %}
+
+{% block content %}
+<div style="max-width:780px">
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-title">
+        <i class="fas fa-{% if action=='add' %}user-plus{% else %}user-pen{% endif %}"></i>
+        {{ 'Registrar nuevo empleado' if action=='add' else 'Actualizar: ' + emp.full_name }}
+      </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('hr.add') if action=='add' else url_for('hr.edit', eid=emp.id) }}">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Código de Empleado</label>
+          <input type="text" name="code" class="form-control" placeholder="EMP-0001"
+                 value="{{ emp.code if emp else '' }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Departamento</label>
+          <select name="department_id" class="form-control">
+            <option value="">— Sin departamento —</option>
+            {% for d in depts %}
+            <option value="{{ d.id }}" {% if emp and emp.department_id==d.id %}selected{% endif %}>{{ d.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Nombre Completo <span style="color:var(--red)">*</span></label>
+        <input type="text" name="full_name" class="form-control" placeholder="Nombres y apellidos"
+               value="{{ emp.full_name if emp else '' }}" required>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Cargo / Posición <span style="color:var(--red)">*</span></label>
+          <input type="text" name="position" class="form-control" placeholder="Ej: Analista de Sistemas"
+                 value="{{ emp.position if emp else '' }}" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Salario Mensual ($) <span style="color:var(--red)">*</span></label>
+          <input type="number" name="salary" class="form-control" step="0.01" min="0"
+                 value="{{ emp.salary if emp else 0 }}" required>
+        </div>
+      </div>
+
+      <div class="form-row-3">
+        <div class="form-group">
+          <label class="form-label">Fecha de Ingreso</label>
+          <input type="date" name="hire_date" class="form-control"
+                 value="{{ emp.hire_date.isoformat() if emp and emp.hire_date else '' }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Estado</label>
+          <select name="status" class="form-control">
+            <option value="active"   {% if emp and emp.status=='active'   %}selected{% endif %}>Activo</option>
+            <option value="inactive" {% if emp and emp.status=='inactive' %}selected{% endif %}>Inactivo</option>
+            <option value="leave"    {% if emp and emp.status=='leave'    %}selected{% endif %}>De Licencia</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Teléfono</label>
+          <input type="text" name="phone" class="form-control" placeholder="9XXXXXXXX"
+                 value="{{ emp.phone if emp else '' }}">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" name="email" class="form-control" placeholder="empleado@empresa.com"
+               value="{{ emp.email if emp else '' }}">
+      </div>
+
+      <div class="d-flex gap-8 mt-16">
+        <button type="submit" class="btn btn-primary btn-lg">
+          <i class="fas fa-floppy-disk"></i> {{ 'Registrar Empleado' if action=='add' else 'Actualizar Empleado' }}
+        </button>
+        <a href="{{ url_for('hr.index') }}" class="btn btn-secondary btn-lg">
+          <i class="fas fa-arrow-left"></i> Cancelar
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

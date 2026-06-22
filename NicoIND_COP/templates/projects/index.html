@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %}Proyectos{% endblock %}
+{% block page_icon %}fas fa-diagram-project{% endblock %}
+{% block page_title %}Gestión de Proyectos{% endblock %}
+{% block breadcrumb %}NicoIND / Proyectos{% endblock %}
+
+{% block content %}
+<!-- Summary Cards -->
+<div class="grid-4 mb-20">
+  {% set sc = [('active','#7c3aed','Activos','bolt'),('planning','#0ea5e9','En Planeación','drafting-compass'),('completed','#10b981','Completados','circle-check'),('on_hold','#f59e0b','En Pausa','pause-circle')] %}
+  {% for key,color,label,icon in sc %}
+  <div class="stat-card" style="--sc:{{ color }}">
+    <div class="stat-top">
+      <div><div class="stat-val">{{ summary.get(key,0) }}</div><div class="stat-lbl">{{ label }}</div></div>
+      <div class="stat-icon" style="color:{{ color }};background:{{ color }}1a"><i class="fas fa-{{ icon }}"></i></div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Filter + Actions -->
+<div class="filter-bar mb-20">
+  <form method="GET" style="display:flex;gap:10px">
+    <select name="status" class="form-control" onchange="this.form.submit()" style="min-width:150px">
+      <option value="all"       {% if status=='all'       %}selected{% endif %}>Todos los estados</option>
+      <option value="active"    {% if status=='active'    %}selected{% endif %}>Activos</option>
+      <option value="planning"  {% if status=='planning'  %}selected{% endif %}>Planeación</option>
+      <option value="on_hold"   {% if status=='on_hold'   %}selected{% endif %}>En Pausa</option>
+      <option value="completed" {% if status=='completed' %}selected{% endif %}>Completados</option>
+      <option value="cancelled" {% if status=='cancelled' %}selected{% endif %}>Cancelados</option>
+    </select>
+  </form>
+  <a href="{{ url_for('projects.add') }}" class="btn btn-primary btn-sm">
+    <i class="fas fa-plus"></i> Nuevo Proyecto
+  </a>
+</div>
+
+<!-- Project Cards -->
+{% if projs %}
+<div class="grid-2">
+  {% for p in projs %}
+  {% set bc = {'active':'badge-purple','planning':'badge-blue','completed':'badge-green','on_hold':'badge-amber','cancelled':'badge-red'} %}
+  {% set pc = {'high':'var(--red-l)','medium':'var(--amber-l)','low':'var(--green-l)'} %}
+  <div class="card" style="border-left:3px solid {{ pc.get(p.priority,'var(--border)') }}">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+      <div style="flex:1;min-width:0">
+        <h3 style="font-family:Nunito,sans-serif;font-size:15px;font-weight:700;margin-bottom:4px;color:var(--text)">
+          {{ p.name }}
+        </h3>
+        <p style="font-size:12px;color:var(--text2);line-height:1.4">{{ (p.description or '')[:100] }}</p>
+      </div>
+      <span class="badge {{ bc.get(p.status,'badge-gray') }}" style="margin-left:10px;flex-shrink:0">{{ p.status }}</span>
+    </div>
+
+    <!-- Progress -->
+    <div class="d-flex jc-b ai-c mb-4">
+      <span style="font-size:11.5px;color:var(--text2)">Progreso</span>
+      <span style="font-size:12px;font-weight:700;color:var(--purple-l)">{{ p.progress }}%</span>
+    </div>
+    <div class="prog-track mb-12">
+      <div class="prog-fill {{ 'green' if p.progress==100 else ('amber' if p.progress<40 else '') }}"
+           style="width:{{ p.progress }}%"></div>
+    </div>
+
+    <!-- Meta info -->
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px">
+      <span style="font-size:11.5px;color:var(--text2)">
+        <i class="fas fa-calendar c-purple" style="margin-right:4px"></i>
+        {% if p.start_date %}{{ p.start_date.strftime('%d/%m/%Y') }}{% else %}—{% endif %}
+        {% if p.end_date %} → {{ p.end_date.strftime('%d/%m/%Y') }}{% endif %}
+      </span>
+      <span style="font-size:11.5px;color:var(--text2)">
+        <i class="fas fa-dollar-sign c-green" style="margin-right:4px"></i>
+        ${{ "{:,.0f}".format(p.budget) }}
+      </span>
+      <span style="font-size:11.5px;color:var(--text2)">
+        <i class="fas fa-tasks c-blue" style="margin-right:4px"></i>
+        {{ p.tasks.count() }} tareas
+      </span>
+    </div>
+
+    <div style="display:flex;gap:6px">
+      <a href="{{ url_for('projects.detail', pid=p.id) }}" class="btn btn-primary btn-sm">
+        <i class="fas fa-arrow-right"></i> Ver Proyecto
+      </a>
+      <span class="badge {% if p.priority=='high' %}badge-red{% elif p.priority=='medium' %}badge-amber{% else %}badge-green{% endif %}">
+        {{ p.priority }}
+      </span>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state" style="padding:60px">
+  <i class="fas fa-diagram-project"></i>
+  <p>No hay proyectos con el filtro seleccionado.</p>
+  <a href="{{ url_for('projects.add') }}" class="btn btn-primary" style="margin-top:14px">
+    <i class="fas fa-plus"></i> Crear primer proyecto
+  </a>
+</div>
+{% endif %}
+{% endblock %}

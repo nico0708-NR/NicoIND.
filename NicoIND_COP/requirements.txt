@@ -1,0 +1,29 @@
+# ─── NicoIND — Requirements ──────────────────────────────────
+# Compatible con Python 3.11, 3.12, 3.13 y 3.14+
+# Todas las dependencias tienen wheels pre-compilados.
+# NO requiere Visual Studio Build Tools ni compilador C.
+# Instalar: pip install -r requirements.txt
+
+# ── Web Framework (pure Python) ──────────────────────────────
+Flask>=3.0.3
+Flask-SQLAlchemy>=3.1.1
+Flask-Login>=0.6.3
+Flask-Bcrypt>=1.0.1
+SQLAlchemy>=2.0.30
+
+# ── Utilities (pure Python) ──────────────────────────────────
+python-dotenv>=1.0.1
+gunicorn>=22.0.0
+
+# ── Reportes (wheels para Python 3.14) ───────────────────────
+reportlab>=4.1.0
+openpyxl>=3.1.2
+
+# ── IA / Machine Learning (opcional, wheels para 3.14) ───────
+# Si fallan, el resto de la app funciona igual.
+# numpy 2.x y scikit-learn 1.5+ tienen wheels para Python 3.14.
+numpy>=2.0.0
+scikit-learn>=1.5.0
+
+# ── Base de datos PostgreSQL (binario pre-compilado) ─────────
+psycopg2-binary>=2.9.9

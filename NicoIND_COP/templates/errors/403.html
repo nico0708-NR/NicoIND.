@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>403 — Acceso Denegado · NicoIND</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body style="background:var(--bg,#0d1117)">
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px">
+  <div style="text-align:center;max-width:480px">
+    <div style="font-size:80px;margin-bottom:16px">🔒</div>
+    <h1 style="font-family:Nunito,sans-serif;font-size:64px;font-weight:800;color:#ef4444;line-height:1;margin-bottom:8px">403</h1>
+    <h2 style="font-family:Nunito,sans-serif;font-size:22px;font-weight:700;color:#e6edf3;margin-bottom:12px">Acceso Denegado</h2>
+    <p style="font-size:14px;color:#8b949e;margin-bottom:28px;line-height:1.6">
+      No tienes permisos para acceder a esta sección.<br>
+      Contacta a tu administrador si crees que es un error.
+    </p>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <a href="javascript:history.back()" style="display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border-radius:8px;background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.35);color:#a78bfa;text-decoration:none;font-size:13.5px;font-weight:600">
+        <i class="fas fa-arrow-left"></i> Volver
+      </a>
+      <a href="/" style="display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border-radius:8px;background:#7c3aed;color:#fff;text-decoration:none;font-size:13.5px;font-weight:600">
+        <i class="fas fa-house"></i> Dashboard
+      </a>
+    </div>
+    <p style="margin-top:24px;font-size:12px;color:#484f58">NicoIND — Industrial Intelligence Dashboard</p>
+  </div>
+</div>
+</body>
+</html>

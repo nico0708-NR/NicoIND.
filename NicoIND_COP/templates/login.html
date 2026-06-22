@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>NicoIND — Acceso</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+
+{% with msgs = get_flashed_messages(with_categories=true) %}
+{% if msgs %}
+<div class="flashes">
+  {% for cat, msg in msgs %}
+  <div class="flash flash-{{ cat }}">
+    <i class="fas {% if cat=='success' %}fa-check-circle{% elif cat=='danger' %}fa-exclamation-circle{% elif cat=='warning' %}fa-triangle-exclamation{% else %}fa-info-circle{% endif %}"></i>
+    <span>{{ msg }}</span>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
+<div class="auth-wrap">
+  <div class="auth-bg"></div>
+  <div class="auth-grid"></div>
+
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-icon"><i class="fas fa-industry"></i></div>
+      <h1>NicoIND</h1>
+      <p>Industrial Intelligence Dashboard</p>
+    </div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="loginTab" onclick="showAuthTab('login')">Iniciar Sesión</button>
+      <button class="auth-tab"        id="regTab"   onclick="showAuthTab('register')">Registrarse</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="loginForm">
+      <form method="POST" action="{{ url_for('auth.login') }}">
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-user c-purple"></i> Usuario o Email</label>
+          <input type="text" name="username" class="form-control" placeholder="superadmin" required autofocus>
+        </div>
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-lock c-purple"></i> Contraseña</label>
+          <div class="pass-wrap">
+            <input type="password" name="password" id="lpwd" class="form-control" placeholder="••••••••" required>
+            <button type="button" class="pass-eye" onclick="togglePwd('lpwd',this)"><i class="fas fa-eye"></i></button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text2);cursor:pointer">
+            <input type="checkbox" name="remember" style="accent-color:var(--purple)"> Recordar sesión
+          </label>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-bottom:14px">
+          <i class="fas fa-right-to-bracket"></i> Ingresar
+        </button>
+      </form>
+      <div style="background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);border-radius:8px;padding:12px;font-size:12px;color:var(--text2)">
+        <strong style="color:var(--purple-l)">Demo:</strong>
+        superadmin / 12345 &nbsp;|&nbsp; admin / 12345 &nbsp;|&nbsp; analista / 12345
+      </div>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="regForm" style="display:none">
+      <form method="POST" action="{{ url_for('auth.login') }}" id="regFormEl">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Usuario</label>
+            <input type="text" name="username" class="form-control" placeholder="mi_usuario" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nombre completo</label>
+            <input type="text" name="full_name" class="form-control" placeholder="Tu nombre">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" name="email" class="form-control" placeholder="tu@empresa.com" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Contraseña</label>
+            <div class="pass-wrap">
+              <input type="password" name="password" id="rpwd" class="form-control" placeholder="••••••" required>
+              <button type="button" class="pass-eye" onclick="togglePwd('rpwd',this)"><i class="fas fa-eye"></i></button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Confirmar</label>
+            <input type="password" name="confirm" class="form-control" placeholder="••••••" required>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block btn-lg" formaction="{{ url_for('auth.register') if false else '#' }}" onclick="this.form.action='{{ url_for('auth.login') }}'">
+          <i class="fas fa-user-plus"></i> Crear Cuenta
+        </button>
+      </form>
+      <script>document.getElementById('regFormEl').action='{{ url_for("auth.register") }}';</script>
+    </div>
+
+    <p style="text-align:center;margin-top:20px;font-size:11.5px;color:var(--text3)">
+      © 2024 NicoIND · Desarrollado por Nicolás Rodríguez
+    </p>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

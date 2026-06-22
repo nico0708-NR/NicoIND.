@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% block title %}Finanzas{% endblock %}
+{% block page_icon %}fas fa-chart-line{% endblock %}
+{% block page_title %}Gestión Financiera{% endblock %}
+{% block breadcrumb %}NicoIND / Finanzas{% endblock %}
+
+{% block content %}
+<!-- KPIs -->
+<div class="grid-4 mb-20">
+  <div class="stat-card" style="--sc:#10b981">
+    <div class="stat-top">
+      <div><div class="stat-val">${{ "{:,.0f}".format(total_income) }}</div><div class="stat-lbl">Total Ingresos</div></div>
+      <div class="stat-icon" style="color:#10b981;background:rgba(16,185,129,.1)"><i class="fas fa-arrow-trend-up"></i></div>
+    </div>
+  </div>
+  <div class="stat-card" style="--sc:#ef4444">
+    <div class="stat-top">
+      <div><div class="stat-val">${{ "{:,.0f}".format(total_expense) }}</div><div class="stat-lbl">Total Gastos</div></div>
+      <div class="stat-icon" style="color:#ef4444;background:rgba(239,68,68,.1)"><i class="fas fa-arrow-trend-down"></i></div>
+    </div>
+  </div>
+  <div class="stat-card" style="--sc:{% if profit>=0 %}#10b981{% else %}#ef4444{% endif %}">
+    <div class="stat-top">
+      <div>
+        <div class="stat-val" style="color:{% if profit>=0 %}var(--green-l){% else %}var(--red-l){% endif %}">
+          ${{ "{:,.0f}".format(profit) }}
+        </div>
+        <div class="stat-lbl">Utilidad Neta</div>
+      </div>
+      <div class="stat-icon" style="color:{% if profit>=0 %}#10b981{% else %}#ef4444{% endif %};background:rgba({% if profit>=0 %}16,185,129{% else %}239,68,68{% endif %},.1)">
+        <i class="fas fa-scale-balanced"></i>
+      </div>
+    </div>
+  </div>
+  <div class="stat-card" style="--sc:#7c3aed">
+    <div class="stat-top">
+      <div><div class="stat-val">{{ margin }}%</div><div class="stat-lbl">Margen de Ganancia</div></div>
+      <div class="stat-icon"><i class="fas fa-percent"></i></div>
+    </div>
+  </div>
+</div>
+
+<!-- Filter + Actions -->
+<div class="filter-bar mb-16">
+  <form method="GET" style="display:flex;gap:10px;flex-wrap:wrap;flex:1">
+    <select name="period" class="form-control" onchange="this.form.submit()" style="min-width:140px">
+      <option value="7"   {% if period=='7'   %}selected{% endif %}>Últimos 7 días</option>
+      <option value="30"  {% if period=='30'  %}selected{% endif %}>Últimos 30 días</option>
+      <option value="90"  {% if period=='90'  %}selected{% endif %}>Últimos 90 días</option>
+      <option value="365" {% if period=='365' %}selected{% endif %}>Último año</option>
+    </select>
+    <select name="type" class="form-control" onchange="this.form.submit()" style="min-width:130px">
+      <option value="all"     {% if ttype=='all'     %}selected{% endif %}>Todos</option>
+      <option value="income"  {% if ttype=='income'  %}selected{% endif %}>Solo Ingresos</option>
+      <option value="expense" {% if ttype=='expense' %}selected{% endif %}>Solo Gastos</option>
+    </select>
+  </form>
+  <a href="{{ url_for('finance.add') }}" class="btn btn-primary btn-sm">
+    <i class="fas fa-plus"></i> Nueva Transacción
+  </a>
+  <a href="{{ url_for('reports.finance_excel') }}" class="btn btn-secondary btn-sm">
+    <i class="fas fa-file-excel"></i> Excel
+  </a>
+  <a href="{{ url_for('reports.finance_pdf') }}" class="btn btn-secondary btn-sm">
+    <i class="fas fa-file-pdf"></i> PDF
+  </a>
+</div>
+
+<div class="grid-21 mb-20">
+  <!-- Chart -->
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-title"><i class="fas fa-chart-bar"></i> Flujo de Caja — Período seleccionado</div>
+    </div>
+    <div class="chart-wrap-lg"><canvas id="financeChart"></canvas></div>
+  </div>
+
+  <!-- Category breakdown -->
+  <div class="card">
+    <div class="card-hd"><div class="card-title"><i class="fas fa-list"></i> Por Categoría</div></div>
+    {% if inc_by_cat %}
+    <div style="margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--green-l);margin-bottom:6px">
+        <i class="fas fa-arrow-up"></i> Ingresos
+      </div>
+      {% for cat, amt in inc_by_cat.items()|sort(attribute='1',reverse=True) %}
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12.5px">
+        <span class="c-text2">{{ cat }}</span>
+        <span class="fw-7 c-green">${{ "{:,.2f}".format(amt) }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% if exp_by_cat %}
+    <div class="divider"></div>
+    <div>
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--red-l);margin-bottom:6px">
+        <i class="fas fa-arrow-down"></i> Gastos
+      </div>
+      {% for cat, amt in exp_by_cat.items()|sort(attribute='1',reverse=True) %}
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12.5px">
+        <span class="c-text2">{{ cat }}</span>
+        <span class="fw-7 c-red">${{ "{:,.2f}".format(amt) }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Transactions Table -->
+<div class="card">
+  <div class="card-hd">
+    <div class="card-title"><i class="fas fa-receipt"></i> Transacciones</div>
+    <span class="badge badge-gray">{{ transactions|length }} registros</span>
+  </div>
+  <div class="table-wrap">
+    {% if transactions %}
+    <table>
+      <thead>
+        <tr><th>Fecha</th><th>Tipo</th><th>Categoría</th><th>Descripción</th><th class="text-right">Monto</th><th>Ref.</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for t in transactions %}
+        <tr>
+          <td style="color:var(--text2);font-size:12px;white-space:nowrap">{{ t.date.strftime('%d/%m/%Y') }}</td>
+          <td>
+            <span class="badge {% if t.transaction_type=='income' %}badge-green{% else %}badge-red{% endif %}">
+              {{ 'Ingreso' if t.transaction_type=='income' else 'Gasto' }}
+            </span>
+          </td>
+          <td><span class="badge badge-gray">{{ t.category or '—' }}</span></td>
+          <td style="max-width:260px" class="truncate">{{ t.description or '—' }}</td>
+          <td class="text-right fw-7 {% if t.transaction_type=='income' %}c-green{% else %}c-red{% endif %}">
+            {{ '+' if t.transaction_type=='income' else '-' }}${{ "{:,.2f}".format(t.amount) }}
+          </td>
+          <td class="mono c-text3 f-12">{{ t.reference or '—' }}</td>
+          <td>
+            <form method="POST" action="{{ url_for('finance.delete', tid=t.id) }}"
+                  onsubmit="return confirm('¿Eliminar esta transacción?')">
+              <button type="submit" class="btn btn-red btn-sm"><i class="fas fa-trash"></i></button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <i class="fas fa-receipt"></i>
+      <p>Sin transacciones en el período seleccionado.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>initFinanceChart('{{ chart_data|safe }}');</script>
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}Nueva Transacción{% endblock %}
+{% block page_icon %}fas fa-plus-circle{% endblock %}
+{% block page_title %}Nueva Transacción{% endblock %}
+{% block breadcrumb %}NicoIND / <a href="{{ url_for('finance.index') }}">Finanzas</a> / Agregar{% endblock %}
+
+{% block content %}
+<div style="max-width:660px">
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-title"><i class="fas fa-receipt"></i> Registrar Transacción Financiera</div>
+    </div>
+    <form method="POST" action="{{ url_for('finance.add') }}">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tipo <span style="color:var(--red)">*</span></label>
+          <select name="transaction_type" class="form-control" required>
+            <option value="income">💰 Ingreso</option>
+            <option value="expense">💸 Gasto</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha <span style="color:var(--red)">*</span></label>
+          <input type="date" name="date" class="form-control" value="{{ today }}" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Categoría <span style="color:var(--red)">*</span></label>
+          <input type="text" name="category" class="form-control" placeholder="Ej: Ventas Producto"
+                 list="cat-list" required>
+          <datalist id="cat-list">
+            <option value="Ventas Producto"><option value="Servicios"><option value="Comisiones">
+            <option value="Otros Ingresos"><option value="Sueldos"><option value="Alquiler">
+            <option value="Servicios Básicos"><option value="Materiales"><option value="Marketing">
+            <option value="Transporte"><option value="Mantenimiento"><option value="Impuestos">
+          </datalist>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Monto ($) <span style="color:var(--red)">*</span></label>
+          <input type="number" name="amount" class="form-control" step="0.01" min="0.01"
+                 placeholder="0.00" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Descripción</label>
+        <textarea name="description" class="form-control" rows="2"
+                  placeholder="Descripción detallada de la transacción"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Referencia / N° Documento</label>
+        <input type="text" name="reference" class="form-control"
+               placeholder="Factura, boleta, comprobante...">
+      </div>
+
+      <div class="d-flex gap-8 mt-16">
+        <button type="submit" class="btn btn-primary btn-lg">
+          <i class="fas fa-floppy-disk"></i> Guardar Transacción
+        </button>
+        <a href="{{ url_for('finance.index') }}" class="btn btn-secondary btn-lg">
+          <i class="fas fa-arrow-left"></i> Cancelar
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

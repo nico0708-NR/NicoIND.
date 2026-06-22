@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% block title %}Business Intelligence{% endblock %}
+{% block page_icon %}fas fa-chart-bar{% endblock %}
+{% block page_title %}Business Intelligence{% endblock %}
+{% block breadcrumb %}NicoIND / Business Intelligence{% endblock %}
+
+{% block content %}
+<!-- Financial Summary -->
+<div class="grid-3 mb-20">
+  <div class="stat-card" style="--sc:#10b981">
+    <div class="stat-top">
+      <div><div class="stat-val">${{ "{:,.0f}".format(total_inc) }}</div><div class="stat-lbl">Ingresos Anuales</div></div>
+      <div class="stat-icon" style="color:#10b981;background:rgba(16,185,129,.1)"><i class="fas fa-arrow-trend-up"></i></div>
+    </div>
+  </div>
+  <div class="stat-card" style="--sc:#ef4444">
+    <div class="stat-top">
+      <div><div class="stat-val">${{ "{:,.0f}".format(total_exp) }}</div><div class="stat-lbl">Gastos Anuales</div></div>
+      <div class="stat-icon" style="color:#ef4444;background:rgba(239,68,68,.1)"><i class="fas fa-arrow-trend-down"></i></div>
+    </div>
+  </div>
+  <div class="stat-card" style="--sc:{% if profit_annual>=0 %}#10b981{% else %}#ef4444{% endif %}">
+    <div class="stat-top">
+      <div>
+        <div class="stat-val" style="color:{% if profit_annual>=0 %}var(--green-l){% else %}var(--red-l){% endif %}">
+          ${{ "{:,.0f}".format(profit_annual) }}
+        </div>
+        <div class="stat-lbl">Utilidad Anual</div>
+      </div>
+      <div class="stat-icon"><i class="fas fa-scale-balanced"></i></div>
+    </div>
+  </div>
+</div>
+
+<!-- Main chart: Monthly Sales vs Expenses -->
+<div class="card mb-20">
+  <div class="card-hd">
+    <div class="card-title"><i class="fas fa-chart-line"></i> Ventas vs Gastos — Últimos 12 Meses</div>
+    <span class="badge badge-purple">Análisis Anual</span>
+  </div>
+  <div class="chart-wrap-lg"><canvas id="biChart"></canvas></div>
+</div>
+
+<!-- Top Products + Category Breakdown -->
+<div class="grid-2 mb-20">
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-title"><i class="fas fa-trophy"></i> Top 10 Productos por Ingresos</div>
+    </div>
+    <div class="table-wrap">
+      {% if top_products %}
+      <table>
+        <thead><tr><th>#</th><th>Producto</th><th class="text-right">Cantidad</th><th class="text-right">Ingresos</th></tr></thead>
+        <tbody>
+          {% for name, qty, rev in top_products %}
+          <tr>
+            <td style="color:var(--text3);font-weight:700">{{ loop.index }}</td>
+            <td class="fw-6" style="max-width:180px" title="{{ name }}">{{ name[:30] }}</td>
+            <td class="text-right c-text2">{{ "{:,.0f}".format(qty or 0) }}</td>
+            <td class="text-right fw-7 c-green">${{ "{:,.2f}".format(rev or 0) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state"><i class="fas fa-trophy"></i><p>Sin datos de ventas</p></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-title"><i class="fas fa-tags"></i> Ingresos por Categoría</div>
+    </div>
+    {% if cat_sales %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Categoría</th><th class="text-right">Ingresos</th><th class="text-right">%</th></tr></thead>
+        <tbody>
+          {% set total_cat = cat_sales | sum(attribute=1) %}
+          {% for cat, rev in cat_sales %}
+          <tr>
+            <td class="fw-6">{{ cat }}</td>
+            <td class="text-right fw-7 c-purple">${{ "{:,.2f}".format(rev or 0) }}</td>
+            <td class="text-right">
+              <div style="display:flex;align-items:center;justify-content:flex-end;gap:8px">
+                <div class="prog-track" style="width:60px;height:5px">
+                  <div class="prog-fill" style="width:{{ (rev/total_cat*100)|round if total_cat else 0 }}%"></div>
+                </div>
+                <span class="c-text2 f-12">{{ "%.1f" % ((rev/total_cat*100) if total_cat else 0) }}%</span>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state"><i class="fas fa-tags"></i><p>Sin datos</p></div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- OEE + Projects + HR row -->
+<div class="grid-3">
+  <div class="card">
+    <div class="card-hd"><div class="card-title"><i class="fas fa-robot"></i> OEE por Máquina</div></div>
+    {% if oee_by_machine %}
+    {% for mach, oee in oee_by_machine %}
+    <div style="margin-bottom:10px">
+      <div class="d-flex jc-b ai-c mb-4">
+        <span style="font-size:12.5px;font-weight:600">{{ mach }}</span>
+        <span style="font-size:12px;font-weight:700;color:{% if oee>=85 %}var(--green-l){% elif oee>=70 %}var(--amber-l){% else %}var(--red-l){% endif %}">
+          {{ "%.1f"|format(oee) }}%
+        </span>
+      </div>
+      <div class="prog-track">
+        <div class="prog-fill {% if oee>=85 %}green{% elif oee>=70 %}amber{% else %}red{% endif %}" style="width:{{ oee }}%"></div>
+      </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="empty-state"><i class="fas fa-robot"></i><p>Sin datos OEE</p></div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-hd"><div class="card-title"><i class="fas fa-diagram-project"></i> Proyectos por Estado</div></div>
+    {% for status, cnt in proj_by_status %}
+    {% set bc = {'active':'badge-purple','planning':'badge-blue','completed':'badge-green','on_hold':'badge-amber','cancelled':'badge-red'} %}
+    <div class="d-flex jc-b ai-c" style="padding:8px 0;border-bottom:1px solid var(--border2)">
+      <span class="badge {{ bc.get(status,'badge-gray') }}">{{ status }}</span>
+      <span class="fw-7">{{ cnt }}</span>
+    </div>
+    {% else %}
+    <div class="empty-state"><i class="fas fa-diagram-project"></i><p>Sin proyectos</p></div>
+    {% endfor %}
+  </div>
+
+  <div class="card">
+    <div class="card-hd"><div class="card-title"><i class="fas fa-users"></i> Recursos Humanos</div></div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      {% for dept_id, cnt, sal in sal_by_dept %}
+      <div style="padding:8px;background:var(--bg4);border-radius:6px">
+        <div class="d-flex jc-b ai-c">
+          <span class="fw-6 f-12">Dept. {{ dept_id or 'N/A' }}</span>
+          <span class="badge badge-purple">{{ cnt }} emp.</span>
+        </div>
+        <div style="font-size:11.5px;color:var(--text2);margin-top:2px">
+          Planilla: ${{ "{:,.0f}".format(sal or 0) }}
+        </div>
+      </div>
+      {% else %}
+      <div class="empty-state"><i class="fas fa-users"></i><p>Sin datos</p></div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>initBIChart('{{ monthly_sales|safe }}');</script>
+{% endblock %}

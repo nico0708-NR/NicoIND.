@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+{% block title %}Ingeniería Industrial{% endblock %}
+{% block page_icon %}fas fa-gear{% endblock %}
+{% block page_title %}Ingeniería Industrial — OEE{% endblock %}
+{% block breadcrumb %}NicoIND / Ingeniería Industrial{% endblock %}
+
+{% block content %}
+<!-- Filter -->
+<div class="filter-bar mb-20">
+  <form method="GET" style="display:flex;gap:10px;flex-wrap:wrap">
+    <select name="days" class="form-control" onchange="this.form.submit()" style="min-width:140px">
+      <option value="7"  {% if days==7  %}selected{% endif %}>Últimos 7 días</option>
+      <option value="14" {% if days==14 %}selected{% endif %}>Últimos 14 días</option>
+      <option value="30" {% if days==30 %}selected{% endif %}>Últimos 30 días</option>
+    </select>
+    <select name="machine" class="form-control" onchange="this.form.submit()" style="min-width:180px">
+      <option value="all" {% if mach=='all' %}selected{% endif %}>Todas las máquinas</option>
+      {% for m in machines %}
+      <option value="{{ m }}" {% if mach==m %}selected{% endif %}>{{ m }}</option>
+      {% endfor %}
+    </select>
+  </form>
+</div>
+
+<!-- Overall OEE + Machine Stats -->
+<div class="grid-12 mb-20">
+  <div class="card" style="text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center">
+    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--text3);margin-bottom:12px">
+      OEE Global Promedio
+    </div>
+    {% set oee_cls = 'oee-good' if overall_oee>=85 else ('oee-medium' if overall_oee>=70 else 'oee-poor') %}
+    <div class="oee-ring {{ oee_cls }}" style="width:130px;height:130px">
+      <div class="oee-val" style="font-size:38px">{{ overall_oee }}%</div>
+    </div>
+    <div class="oee-lbl">Overall Equipment Effectiveness</div>
+    {% if overall_oee >= 85 %}
+    <span class="badge badge-green" style="margin-top:10px">✅ Clase Mundial</span>
+    {% elif overall_oee >= 70 %}
+    <span class="badge badge-amber" style="margin-top:10px">⚠️ Necesita Mejora</span>
+    {% else %}
+    <span class="badge badge-red" style="margin-top:10px">🔴 Crítico</span>
+    {% endif %}
+    <div style="margin-top:14px;font-size:12px;color:var(--text2)">
+      Meta: 85% (World Class OEE)
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd"><div class="card-title"><i class="fas fa-table-cells"></i> Estadísticas por Máquina</div></div>
+    <div class="table-wrap">
+      {% if machine_stats %}
+      <table>
+        <thead><tr><th>Máquina</th><th class="text-center">OEE</th><th class="text-center">Disp.</th><th class="text-center">Rend.</th><th class="text-center">Cal.</th><th class="text-right">Prod.</th><th class="text-right">Defectos</th></tr></thead>
+        <tbody>
+          {% for mach_name, s in machine_stats.items() %}
+          <tr>
+            <td class="fw-6">
+              <i class="fas fa-robot c-purple" style="margin-right:6px"></i>{{ mach_name }}
+            </td>
+            <td class="text-center">
+              <span style="font-weight:700;color:{% if s.oee>=85 %}var(--green-l){% elif s.oee>=70 %}var(--amber-l){% else %}var(--red-l){% endif %}">
+                {{ s.oee }}%
+              </span>
+            </td>
+            <td class="text-center c-blue">{{ s.avail }}%</td>
+            <td class="text-center c-purple">{{ s.perf }}%</td>
+            <td class="text-center c-green">{{ s.qual }}%</td>
+            <td class="text-right">{{ "{:,}".format(s.prod) }}</td>
+            <td class="text-right c-red">{{ "{:,}".format(s.defects) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state"><i class="fas fa-robot"></i><p>Sin datos en el período.</p></div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- OEE Trend Chart -->
+<div class="card mb-20">
+  <div class="card-hd">
+    <div class="card-title"><i class="fas fa-chart-line"></i> Tendencia OEE por Máquina</div>
+  </div>
+  <div class="chart-wrap-lg"><canvas id="oeeChart"></canvas></div>
+</div>
+
+<!-- Add Metric + History -->
+<div class="grid-2">
+  <div class="card">
+    <div class="card-hd"><div class="card-title"><i class="fas fa-plus-circle"></i> Registrar Métrica OEE</div></div>
+    <form method="POST" action="{{ url_for('engineering.add_metric') }}">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Máquina / Equipo</label>
+          <input type="text" name="machine_name" class="form-control" list="mach-list"
+                 placeholder="Nombre de la máquina" required>
+          <datalist id="mach-list">{% for m in machines %}<option value="{{ m }}">{% endfor %}</datalist>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha</label>
+          <input type="date" name="record_date" class="form-control" required>
+        </div>
+      </div>
+      <div class="form-row-3">
+        <div class="form-group">
+          <label class="form-label">Disponibilidad (%)</label>
+          <input type="number" name="availability" class="form-control" step="0.1" min="0" max="100" placeholder="0-100">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Rendimiento (%)</label>
+          <input type="number" name="performance" class="form-control" step="0.1" min="0" max="100" placeholder="0-100">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Calidad (%)</label>
+          <input type="number" name="quality" class="form-control" step="0.1" min="0" max="100" placeholder="0-100">
+        </div>
+      </div>
+      <div class="form-row-3">
+        <div class="form-group">
+          <label class="form-label">Unidades Producidas</label>
+          <input type="number" name="production_units" class="form-control" min="0" value="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Unidades Defectuosas</label>
+          <input type="number" name="defect_units" class="form-control" min="0" value="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tiempo Muerto (min)</label>
+          <input type="number" name="downtime_minutes" class="form-control" min="0" value="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Turno</label>
+          <select name="shift" class="form-control">
+            <option value="day">Día</option>
+            <option value="afternoon">Tarde</option>
+            <option value="night">Noche</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notas</label>
+          <input type="text" name="notes" class="form-control" placeholder="Observaciones">
+        </div>
+      </div>
+      <div style="background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);border-radius:6px;padding:10px;font-size:12px;color:var(--text2);margin-bottom:12px">
+        <strong class="c-purple">OEE = Disponibilidad × Rendimiento × Calidad</strong><br>
+        Resultado calculado automáticamente al guardar.
+      </div>
+      <button type="submit" class="btn btn-primary"><i class="fas fa-floppy-disk"></i> Registrar Métrica</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="card-hd"><div class="card-title"><i class="fas fa-history"></i> Últimos Registros</div></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Fecha</th><th>Máquina</th><th class="text-center">OEE</th><th class="text-center">Prod.</th></tr></thead>
+        <tbody>
+          {% for m in metrics %}
+          <tr>
+            <td class="f-12 c-text2">{{ m.record_date.strftime('%d/%m/%Y') }}</td>
+            <td class="fw-6" style="font-size:12px">{{ m.machine_name }}</td>
+            <td class="text-center">
+              <span style="font-weight:700;color:{% if m.oee>=85 %}var(--green-l){% elif m.oee>=70 %}var(--amber-l){% else %}var(--red-l){% endif %}">
+                {{ m.oee }}%
+              </span>
+            </td>
+            <td class="text-center c-text2">{{ m.production_units }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" class="text-center c-text3" style="padding:20px">Sin datos aún</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const machines = JSON.parse('{{ machines|tojson|safe }}');
+  initOEEChart('{{ chart_data|safe }}', JSON.stringify(machines));
+</script>
+{% endblock %}

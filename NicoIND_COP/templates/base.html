@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{% block title %}NicoIND{% endblock %} — Industrial Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- ══ SIDEBAR ══════════════════════════════════════════════ -->
+  <aside class="sidebar" id="sidebar">
+
+    <div class="sidebar-brand">
+      <div class="brand-logo"><i class="fas fa-industry"></i></div>
+      <div>
+        <div class="brand-name">NicoIND</div>
+        <div class="brand-sub">Industrial Intelligence</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section">Principal</div>
+      <a href="{{ url_for('dashboard.index') }}"
+         class="nav-item {% if request.blueprint=='dashboard' %}active{% endif %}">
+        <i class="fas fa-th-large"></i> Dashboard
+      </a>
+
+      <div class="nav-section" style="margin-top:6px">Gestión</div>
+      <a href="{{ url_for('inventory.index') }}"
+         class="nav-item {% if request.blueprint=='inventory' %}active{% endif %}">
+        <i class="fas fa-boxes-stacked"></i> Inventario
+      </a>
+      <a href="{{ url_for('finance.index') }}"
+         class="nav-item {% if request.blueprint=='finance' %}active{% endif %}">
+        <i class="fas fa-chart-line"></i> Finanzas
+      </a>
+      <a href="{{ url_for('hr.index') }}"
+         class="nav-item {% if request.blueprint=='hr' %}active{% endif %}">
+        <i class="fas fa-users"></i> Recursos Humanos
+      </a>
+      <a href="{{ url_for('projects.index') }}"
+         class="nav-item {% if request.blueprint=='projects' %}active{% endif %}">
+        <i class="fas fa-diagram-project"></i> Proyectos
+      </a>
+
+      <div class="nav-section" style="margin-top:6px">Análisis</div>
+      <a href="{{ url_for('engineering.index') }}"
+         class="nav-item {% if request.blueprint=='engineering' %}active{% endif %}">
+        <i class="fas fa-gear"></i> Ingeniería Industrial
+      </a>
+      <a href="{{ url_for('bi.index') }}"
+         class="nav-item {% if request.blueprint=='bi' %}active{% endif %}">
+        <i class="fas fa-chart-bar"></i> Business Intelligence
+      </a>
+      <a href="{{ url_for('ai.index') }}"
+         class="nav-item {% if request.blueprint=='ai' %}active{% endif %}">
+        <i class="fas fa-robot"></i> IA Empresarial
+      </a>
+      <a href="{{ url_for('reports.index') }}"
+         class="nav-item {% if request.blueprint=='reports' %}active{% endif %}">
+        <i class="fas fa-file-export"></i> Reportes
+      </a>
+
+      {% if current_user.role in ('superadmin','admin') %}
+      <div class="nav-section" style="margin-top:6px">Sistema</div>
+      <a href="{{ url_for('admin.index') }}"
+         class="nav-item {% if request.blueprint=='admin' %}active{% endif %}">
+        <i class="fas fa-shield-halved"></i> Administración
+      </a>
+      {% endif %}
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-ava">{{ current_user.initials }}</div>
+      <div style="flex:1;min-width:0">
+        <div class="user-nm truncate">{{ current_user.full_name or current_user.username }}</div>
+        <div class="user-rl">{{ current_user.role }}</div>
+      </div>
+      <a href="{{ url_for('auth.logout') }}" title="Cerrar sesión"
+         style="color:var(--text3);font-size:15px;flex-shrink:0">
+        <i class="fas fa-right-from-bracket"></i>
+      </a>
+    </div>
+  </aside>
+
+  <!-- ══ MAIN WRAPPER ══════════════════════════════════════════ -->
+  <div class="main-wrapper">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <button class="menu-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+      <div class="topbar-title">
+        <h1><i class="{% block page_icon %}fas fa-th-large{% endblock %}"></i> {% block page_title %}Dashboard{% endblock %}</h1>
+        <div class="breadcrumb">{% block breadcrumb %}NicoIND{% endblock %}</div>
+      </div>
+      <div class="topbar-right">
+        <div class="status-chip"><span class="status-dot"></span> Sistema activo</div>
+        <span style="font-size:12px;color:var(--text3)">{{ current_user.company.name }}</span>
+      </div>
+    </header>
+
+    <!-- Flash messages -->
+    {% with msgs = get_flashed_messages(with_categories=true) %}
+    {% if msgs %}
+    <div class="flashes">
+      {% for cat, msg in msgs %}
+      <div class="flash flash-{{ cat }}">
+        <i class="fas {% if cat=='success' %}fa-check-circle{% elif cat=='danger' %}fa-exclamation-circle{% elif cat=='warning' %}fa-triangle-exclamation{% else %}fa-info-circle{% endif %}"></i>
+        <span>{{ msg }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <!-- Page content -->
+    <main class="content">
+      {% block content %}{% endblock %}
+    </main>
+
+  </div><!-- /main-wrapper -->
+</div><!-- /app-layout -->
+
+<!-- Modal overlay universal -->
+<div class="modal-overlay" id="movementModal"
+     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;align-items:center;justify-content:center">
+  <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:24px;width:400px;max-width:95vw">
+    <h3 style="font-family:Nunito,sans-serif;font-size:16px;font-weight:700;margin-bottom:16px">
+      <i class="fas fa-arrows-up-down c-purple"></i> Movimiento de Stock
+    </h3>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:14px">Producto: <strong id="mvProductName"></strong></p>
+    <form method="POST" id="mvForm">
+      <input type="hidden" name="product_id" id="mvProductId">
+      <div class="form-row mb-12">
+        <div class="form-group mb-4">
+          <label class="form-label">Tipo</label>
+          <select name="movement_type" class="form-control">
+            <option value="in">Entrada (+)</option>
+            <option value="out">Salida (−)</option>
+            <option value="adjustment">Ajuste</option>
+          </select>
+        </div>
+        <div class="form-group mb-4">
+          <label class="form-label">Cantidad</label>
+          <input type="number" name="quantity" class="form-control" step="0.1" min="0.1" required placeholder="0">
+        </div>
+      </div>
+      <div class="form-group mb-12">
+        <label class="form-label">Referencia</label>
+        <input type="text" name="reference" class="form-control" placeholder="Ej: OC-0001, Factura #123">
+      </div>
+      <div class="d-flex gap-8">
+        <button type="submit" class="btn btn-primary" style="flex:1">
+          <i class="fas fa-check"></i> Registrar
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal('movementModal')">
+          Cancelar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  document.getElementById('mvForm').addEventListener('submit', function() {
+    const pid = document.getElementById('mvProductId').value;
+    this.action = `/inventory/movement/${pid}`;
+  });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

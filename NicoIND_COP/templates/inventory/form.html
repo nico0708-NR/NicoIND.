@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block title %}{% if action=='add' %}Nuevo Producto{% else %}Editar Producto{% endif %}{% endblock %}
+{% block page_icon %}fas fa-box{% endblock %}
+{% block page_title %}{% if action=='add' %}Nuevo Producto{% else %}Editar Producto{% endif %}{% endblock %}
+{% block breadcrumb %}NicoIND / <a href="{{ url_for('inventory.index') }}">Inventario</a> / {{ 'Agregar' if action=='add' else 'Editar' }}{% endblock %}
+
+{% block content %}
+<div style="max-width:780px">
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-title">
+        <i class="fas fa-{% if action=='add' %}plus-circle{% else %}pen{% endif %}"></i>
+        {{ 'Registrar nuevo producto' if action=='add' else 'Actualizar producto: ' + product.name }}
+      </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('inventory.add') if action=='add' else url_for('inventory.edit', pid=product.id) }}">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Código</label>
+          <input type="text" name="code" class="form-control" placeholder="PRD-0001"
+                 value="{{ product.code if product else '' }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Categoría <span style="color:var(--red)">*</span></label>
+          <input type="text" name="category" class="form-control" placeholder="Ej: Maquinaria"
+                 value="{{ product.category if product else '' }}" list="cat-list" required>
+          <datalist id="cat-list">
+            {% for c in categories %}<option value="{{ c }}">{% endfor %}
+          </datalist>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Nombre del Producto <span style="color:var(--red)">*</span></label>
+        <input type="text" name="name" class="form-control" placeholder="Nombre descriptivo del producto"
+               value="{{ product.name if product else '' }}" required>
+      </div>
+
+      <div class="form-row-3">
+        <div class="form-group">
+          <label class="form-label">Unidad de medida</label>
+          <select name="unit" class="form-control">
+            {% for u in ['unidad','metro','kg','litro','caja','rollo','par','juego','set','galón'] %}
+            <option value="{{ u }}" {% if product and product.unit==u %}selected{% endif %}>{{ u }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Stock Mínimo</label>
+          <input type="number" name="min_stock" class="form-control" step="0.1" min="0"
+                 value="{{ product.min_stock if product else 10 }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Stock Máximo</label>
+          <input type="number" name="max_stock" class="form-control" step="0.1" min="0"
+                 value="{{ product.max_stock if product else 500 }}">
+        </div>
+      </div>
+
+      {% if action == 'add' %}
+      <div class="form-group">
+        <label class="form-label">Stock Inicial</label>
+        <input type="number" name="stock" class="form-control" step="0.1" min="0" value="0"
+               placeholder="Cantidad en almacén actualmente">
+      </div>
+      {% endif %}
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Costo Unitario ($)</label>
+          <input type="number" name="cost" class="form-control" step="0.01" min="0"
+                 value="{{ product.cost if product else 0 }}" placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Precio de Venta ($)</label>
+          <input type="number" name="price" class="form-control" step="0.01" min="0"
+                 value="{{ product.price if product else 0 }}" placeholder="0.00">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Proveedor</label>
+          <input type="text" name="supplier" class="form-control" placeholder="Nombre del proveedor"
+                 value="{{ product.supplier if product else '' }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ubicación en Almacén</label>
+          <input type="text" name="location" class="form-control" placeholder="Ej: A1-05"
+                 value="{{ product.location if product else '' }}">
+        </div>
+      </div>
+
+      <div class="d-flex gap-8 mt-16">
+        <button type="submit" class="btn btn-primary btn-lg">
+          <i class="fas fa-{% if action=='add' %}plus{% else %}floppy-disk{% endif %}"></i>
+          {{ 'Guardar Producto' if action=='add' else 'Actualizar Producto' }}
+        </button>
+        <a href="{{ url_for('inventory.index') }}" class="btn btn-secondary btn-lg">
+          <i class="fas fa-arrow-left"></i> Cancelar
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

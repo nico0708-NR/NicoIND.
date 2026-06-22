@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+{% block title %}IA Empresarial{% endblock %}
+{% block page_icon %}fas fa-robot{% endblock %}
+{% block page_title %}IA Empresarial{% endblock %}
+{% block breadcrumb %}NicoIND / IA Empresarial{% endblock %}
+
+{% block content %}
+<!-- ML Status -->
+{% if not ml_available %}
+<div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:var(--amber-l)">
+  <i class="fas fa-triangle-exclamation" style="margin-right:8px"></i>
+  <strong>scikit-learn no está instalado.</strong> Ejecuta: <code>pip install scikit-learn numpy pandas</code>
+  para habilitar todos los modelos de IA.
+</div>
+{% endif %}
+
+<div style="background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.2);border-radius:8px;padding:14px 18px;margin-bottom:24px;font-size:13px;color:var(--purple-l)">
+  <i class="fas fa-robot" style="margin-right:8px"></i>
+  <strong>Motor de IA activo.</strong> Análisis basado en datos reales de la base de datos.
+  Los modelos se entrenan con datos históricos y mejoran con más información.
+</div>
+
+<!-- 1. Sales Prediction -->
+{% set sales = results.get('sales') %}
+<div class="card mb-20">
+  <div class="card-hd">
+    <div class="card-title"><i class="fas fa-chart-line"></i> Predicción de Ventas — Próximos 30 días</div>
+    {% if sales and 'error' not in sales %}
+    <div style="display:flex;gap:8px;align-items:center">
+      <span class="badge badge-green">R² {{ sales.r2 }}</span>
+      <span class="badge badge-purple">Confianza {{ sales.confidence }}%</span>
+      <span class="badge {% if 'alcista' in sales.trend_text %}badge-green{% else %}badge-red{% endif %}">
+        Tendencia {{ sales.trend_text }}
+      </span>
+    </div>
+    {% endif %}
+  </div>
+  {% if sales and 'error' not in sales %}
+  <div class="grid-3 mb-16">
+    <div style="text-align:center;padding:12px;background:var(--bg4);border-radius:8px">
+      <div style="font-size:22px;font-weight:800;font-family:Nunito,sans-serif;color:var(--purple-l)">
+        ${{ "{:,.0f}".format(sales.avg_daily_pred) }}
+      </div>
+      <div style="font-size:11px;color:var(--text2);margin-top:2px">Venta diaria estimada</div>
+    </div>
+    <div style="text-align:center;padding:12px;background:var(--bg4);border-radius:8px">
+      <div style="font-size:22px;font-weight:800;font-family:Nunito,sans-serif;color:var(--green-l)">
+        ${{ "{:,.0f}".format(sales.total_30d_pred) }}
+      </div>
+      <div style="font-size:11px;color:var(--text2);margin-top:2px">Total proyectado 30 días</div>
+    </div>
+    <div style="text-align:center;padding:12px;background:var(--bg4);border-radius:8px">
+      <div style="font-size:22px;font-weight:800;font-family:Nunito,sans-serif;color:{% if sales.trend_daily>=0 %}var(--green-l){% else %}var(--red-l){% endif %}">
+        {{ '+' if sales.trend_daily>=0 else '' }}${{ "{:,.0f}".format(sales.trend_daily) }}
+      </div>
+      <div style="font-size:11px;color:var(--text2);margin-top:2px">Tendencia diaria</div>
+    </div>
+  </div>
+  <div class="chart-wrap-lg"><canvas id="aiSalesChart"></canvas></div>
+  {% elif sales and 'error' in sales %}
+  <div class="empty-state"><i class="fas fa-chart-line"></i><p>{{ sales.error }}</p></div>
+  {% else %}
+  <div class="empty-state"><i class="fas fa-database"></i><p>Sin datos suficientes para predicción.</p></div>
+  {% endif %}
+</div>
+
+<!-- 2. Anomaly Detection -->
+{% set anom = results.get('anomalies') %}
+<div class="card mb-20">
+  <div class="card-hd">
+    <div class="card-title"><i class="fas fa-shield-halved"></i> Detección de Anomalías Financieras (Isolation Forest)</div>
+    {% if anom and 'error' not in anom %}
+    <span class="badge {% if anom.anomalies_found==0 %}badge-green{% elif anom.anomalies_found<5 %}badge-amber{% else %}badge-red{% endif %}">
+      {{ anom.anomalies_found }} anomalías detectadas
+    </span>
+    {% endif %}
+  </div>
+  {% if anom and 'error' not in anom %}
+  <div class="grid-4 mb-16">
+    <div style="text-align:center;padding:10px;background:var(--bg4);border-radius:8px">
+      <div class="fw-8 f-13" style="font-family:Nunito,sans-serif;font-size:20px;color:var(--blue-l)">{{ anom.total_analyzed }}</div>
+      <div style="font-size:11px;color:var(--text2)">Transacciones analizadas</div>
+    </div>
+    <div style="text-align:center;padding:10px;background:var(--bg4);border-radius:8px">
+      <div class="fw-8" style="font-family:Nunito,sans-serif;font-size:20px;color:{% if anom.anomalies_found==0 %}var(--green-l){% else %}var(--red-l){% endif %}">{{ anom.anomalies_found }}</div>
+      <div style="font-size:11px;color:var(--text2)">Anomalías detectadas</div>
+    </div>
+    <div style="text-align:center;padding:10px;background:var(--bg4);border-radius:8px">
+      <div class="fw-8" style="font-family:Nunito,sans-serif;font-size:20px;color:var(--amber-l)">{{ anom.anomaly_rate }}%</div>
+      <div style="font-size:11px;color:var(--text2)">Tasa de anomalía</div>
+    </div>
+    <div style="text-align:center;padding:10px;background:var(--bg4);border-radius:8px">
+      <div class="fw-8" style="font-family:Nunito,sans-serif;font-size:20px;color:var(--purple-l)">${{ "{:,.0f}".format(anom.avg_amount) }}</div>
+      <div style="font-size:11px;color:var(--text2)">Monto promedio</div>
+    </div>
+  </div>
+  {% if anom.anomalies %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Fecha</th><th>Tipo</th><th>Categoría</th><th>Descripción</th><th class="text-right">Monto</th></tr></thead>
+      <tbody>
+        {% for a in anom.anomalies %}
+        <tr style="background:rgba(239,68,68,.04)">
+          <td class="f-12 c-text2">{{ a.date }}</td>
+          <td><span class="badge {% if a.type=='income' %}badge-green{% else %}badge-red{% endif %}">{{ a.type }}</span></td>
+          <td>{{ a.category or '—' }}</td>
+          <td class="truncate" style="max-width:200px">{{ a.description or '—' }}</td>
+          <td class="text-right fw-7 c-red">${{ "{:,.2f}".format(a.amount) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="text-align:center;padding:20px;color:var(--green-l)">
+    <i class="fas fa-shield-check" style="font-size:28px;margin-bottom:8px;display:block"></i>
+    <strong>✅ Sin anomalías detectadas.</strong> Todas las transacciones están dentro del rango normal.
+  </div>
+  {% endif %}
+  {% elif anom and 'error' in anom %}
+  <div class="empty-state"><i class="fas fa-shield-halved"></i><p>{{ anom.error }}</p></div>
+  {% endif %}
+</div>
+
+<!-- 3. Demand Forecast + Inventory Optimization in 2 cols -->
+<div class="grid-2 mb-20">
+  <!-- Demand Forecast -->
+  {% set demand = results.get('demand') %}
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-title"><i class="fas fa-boxes-stacked"></i> Pronóstico de Demanda (30 días)</div>
+      {% if demand and 'error' not in demand %}
+      <span class="badge badge-blue">Confianza {{ demand.confidence }}%</span>
+      {% endif %}
+    </div>
+    {% if demand and 'error' not in demand %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Categoría</th><th class="text-right">Qty/día</th><th class="text-right">Qty 30d</th><th class="text-right">Rev. 30d</th></tr></thead>
+        <tbody>
+          {% for f in demand.forecast %}
+          <tr>
+            <td class="fw-6">{{ f.category }}</td>
+            <td class="text-right c-text2">{{ f.daily_qty }}</td>
+            <td class="text-right fw-7">{{ "{:,.0f}".format(f.forecast_30d_qty) }}</td>
+            <td class="text-right fw-7 c-green">${{ "{:,.0f}".format(f.forecast_30d_rev) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% elif demand and 'error' in demand %}
+    <div class="empty-state"><i class="fas fa-boxes-stacked"></i><p>{{ demand.error }}</p></div>
+    {% endif %}
+  </div>
+
+  <!-- Inventory Optimization -->
+  {% set inv = results.get('inventory') %}
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-title"><i class="fas fa-calculator"></i> Optimización EOQ</div>
+      {% if inv and 'error' not in inv %}
+      <div style="display:flex;gap:6px">
+        {% if inv.urgent > 0 %}<span class="badge badge-red">{{ inv.urgent }} urgente</span>{% endif %}
+        {% if inv.to_reorder > 0 %}<span class="badge badge-amber">{{ inv.to_reorder }} reabastecer</span>{% endif %}
+      </div>
+      {% endif %}
+    </div>
+    {% if inv and 'error' not in inv %}
+    <div class="table-wrap" style="max-height:300px;overflow-y:auto">
+      <table>
+        <thead><tr><th>Producto</th><th class="text-right">Stock</th><th class="text-right">EOQ</th><th>Alerta</th></tr></thead>
+        <tbody>
+          {% for r in inv.results if r.status in ('out','low') %}
+          <tr>
+            <td class="fw-6" style="max-width:150px" title="{{ r.product }}">{{ r.product[:22] }}</td>
+            <td class="text-right {% if r.status=='out' %}c-red{% else %}c-amber{% endif %} fw-7">{{ r.stock }}</td>
+            <td class="text-right c-purple">{{ r.eoq }}</td>
+            <td style="font-size:11.5px">{{ r.recommendation }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" class="text-center" style="padding:20px;color:var(--green-l)">
+            <i class="fas fa-check-circle"></i> Stock optimizado
+          </td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% elif inv and 'error' in inv %}
+    <div class="empty-state"><i class="fas fa-calculator"></i><p>{{ inv.error }}</p></div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- 4. OEE Prediction -->
+{% set oee = results.get('oee') %}
+{% if oee and 'error' not in oee %}
+<div class="card">
+  <div class="card-hd">
+    <div class="card-title"><i class="fas fa-gear"></i> Predicción OEE por Máquina (Regresión Lineal)</div>
+    <div>
+      <span class="badge badge-gray">Meta: 85% (World Class)</span>
+      {% if oee.gap > 0 %}
+      <span class="badge badge-amber" style="margin-left:6px">Gap: {{ oee.gap }}%</span>
+      {% else %}
+      <span class="badge badge-green" style="margin-left:6px">✅ Sobre la meta</span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="grid-3">
+    {% for mach_name, mt in oee.machine_trends.items() %}
+    <div style="background:var(--bg4);border-radius:8px;padding:14px;text-align:center">
+      <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.6px">
+        <i class="fas fa-robot c-purple" style="margin-right:5px"></i>{{ mach_name }}
+      </div>
+      <div style="font-size:28px;font-weight:800;font-family:Nunito,sans-serif;
+           color:{% if mt.current_oee>=85 %}var(--green-l){% elif mt.current_oee>=70 %}var(--amber-l){% else %}var(--red-l){% endif %}">
+        {{ mt.current_oee }}%
+      </div>
+      <div style="font-size:11.5px;color:var(--text2);margin:4px 0">OEE actual</div>
+      <div style="font-size:13px;font-weight:600;color:var(--purple-l)">→ {{ mt.predicted_oee }}%</div>
+      <div style="font-size:11px;color:var(--text2)">Predicción 7 días</div>
+      <span class="badge {% if 'Mejorando' in mt.trend_text %}badge-green{% else %}badge-red{% endif %}" style="margin-top:8px">
+        {{ mt.trend_text }}
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% set sales = results.get('sales') %}
+{% if sales and 'error' not in sales %}
+<script>
+  initAISalesChart(
+    {{ sales.historical_labels | tojson }},
+    {{ sales.historical_values | tojson }},
+    {{ sales.future_labels | tojson }},
+    {{ sales.future_values  | tojson }}
+  );
+</script>
+{% endif %}
+{% endblock %}

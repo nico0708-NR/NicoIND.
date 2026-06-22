@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% block title %}Reportes{% endblock %}
+{% block page_icon %}fas fa-file-export{% endblock %}
+{% block page_title %}Centro de Reportes{% endblock %}
+{% block breadcrumb %}NicoIND / Reportes{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <p>Genera y descarga reportes en PDF o Excel de todos los módulos del sistema.</p>
+</div>
+
+{% if not REPORTLAB or not OPENPYXL %}
+<div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:var(--amber-l)">
+  <i class="fas fa-triangle-exclamation" style="margin-right:8px"></i>
+  <strong>Dependencias opcionales:</strong>
+  {% if not REPORTLAB %} <code>reportlab</code> (PDF){% endif %}
+  {% if not OPENPYXL %} <code>openpyxl</code> (Excel){% endif %}
+  no están instaladas. Ejecuta: <code>pip install reportlab openpyxl</code>
+</div>
+{% endif %}
+
+<!-- Inventory Reports -->
+<h3 style="font-family:Nunito,sans-serif;font-size:15px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px">
+  <i class="fas fa-boxes-stacked c-purple"></i> Inventario
+</h3>
+<div class="grid-4 mb-20">
+  <div class="report-card">
+    <span class="ri" style="color:#ef4444">📄</span>
+    <h3>Inventario PDF</h3>
+    <p>Lista completa de productos con stock, costos y valor actual.</p>
+    <a href="{{ url_for('reports.inventory_pdf') }}"
+       class="btn btn-red btn-block {% if not REPORTLAB %}btn-disabled{% endif %}"
+       {% if not REPORTLAB %}onclick="return false" title="Instala reportlab"{% endif %}>
+      <i class="fas fa-file-pdf"></i> Descargar PDF
+    </a>
+  </div>
+  <div class="report-card">
+    <span class="ri" style="color:#10b981">📊</span>
+    <h3>Inventario Excel</h3>
+    <p>Hoja de cálculo completa con todos los productos y su estado de stock.</p>
+    <a href="{{ url_for('reports.inventory_excel') }}"
+       class="btn btn-green btn-block {% if not OPENPYXL %}btn-disabled{% endif %}"
+       {% if not OPENPYXL %}onclick="return false" title="Instala openpyxl"{% endif %}>
+      <i class="fas fa-file-excel"></i> Descargar Excel
+    </a>
+  </div>
+</div>
+
+<!-- Finance Reports -->
+<h3 style="font-family:Nunito,sans-serif;font-size:15px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px">
+  <i class="fas fa-chart-line c-blue"></i> Finanzas
+</h3>
+<div class="grid-4 mb-20">
+  <div class="report-card">
+    <span class="ri" style="color:#ef4444">📄</span>
+    <h3>Reporte Financiero PDF</h3>
+    <p>Estado de P&L con resumen de ingresos, gastos y utilidad neta.</p>
+    <a href="{{ url_for('reports.finance_pdf') }}"
+       class="btn btn-red btn-block {% if not REPORTLAB %}btn-disabled{% endif %}"
+       {% if not REPORTLAB %}onclick="return false"{% endif %}>
+      <i class="fas fa-file-pdf"></i> Descargar PDF
+    </a>
+  </div>
+  <div class="report-card">
+    <span class="ri" style="color:#10b981">📊</span>
+    <h3>Transacciones Excel</h3>
+    <p>Libro con todas las transacciones financieras y hoja de resumen P&L.</p>
+    <a href="{{ url_for('reports.finance_excel') }}"
+       class="btn btn-green btn-block {% if not OPENPYXL %}btn-disabled{% endif %}"
+       {% if not OPENPYXL %}onclick="return false"{% endif %}>
+      <i class="fas fa-file-excel"></i> Descargar Excel
+    </a>
+  </div>
+</div>
+
+<!-- HR Reports -->
+<h3 style="font-family:Nunito,sans-serif;font-size:15px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px">
+  <i class="fas fa-users c-green"></i> Recursos Humanos
+</h3>
+<div class="grid-4 mb-20">
+  <div class="report-card">
+    <span class="ri" style="color:#10b981">📊</span>
+    <h3>Empleados Excel</h3>
+    <p>Listado completo de empleados con cargo, departamento y salario.</p>
+    <a href="{{ url_for('reports.hr_excel') }}"
+       class="btn btn-green btn-block {% if not OPENPYXL %}btn-disabled{% endif %}"
+       {% if not OPENPYXL %}onclick="return false"{% endif %}>
+      <i class="fas fa-file-excel"></i> Descargar Excel
+    </a>
+  </div>
+</div>
+
+<!-- Sales Reports -->
+<h3 style="font-family:Nunito,sans-serif;font-size:15px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px">
+  <i class="fas fa-sack-dollar c-amber"></i> Ventas
+</h3>
+<div class="grid-4">
+  <div class="report-card">
+    <span class="ri" style="color:#f59e0b">📊</span>
+    <h3>Ventas Excel</h3>
+    <p>Historial completo de órdenes de venta con cliente, estado y totales.</p>
+    <a href="{{ url_for('reports.sales_excel') }}"
+       class="btn btn-amber btn-block {% if not OPENPYXL %}btn-disabled{% endif %}"
+       {% if not OPENPYXL %}onclick="return false"{% endif %}>
+      <i class="fas fa-file-excel"></i> Descargar Excel
+    </a>
+  </div>
+</div>
+{% endblock %}
